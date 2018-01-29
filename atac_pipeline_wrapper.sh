@@ -10,6 +10,7 @@
 EXPECTED_ARGS=4
 ARGC=$#
 
+ml load macs2
 ml load fastqc
 ml load cutadapt
 ml load bowtie2

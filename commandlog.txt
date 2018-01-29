@@ -1,0 +1,541 @@
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:16:20 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/5897.log
+# Stage get_id
+# Stage trim_reads
+cutadapt -a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT -q 20 --minimum-length 36 -o /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz | tee /cephfs/homes/biomate1/szha0069/test_seq_files/trim_reads/_trim_reads_output
+# Stage map_to_reference
+bowtie2 -X2000 --no-mixed --no-discordant -p 10 -x /home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz -S /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam 3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/map_to_reference/_map_to_reference_output
+# Stage sam_to_bam
+picard SortSam SO=coordinate INPUT=/home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam OUTPUT=/home/szha0069/test_seq_files//sam_to_bam/EDM_TAGGCA_L001.bam CREATE_INDEX=true
+# Stage filter_reads_1
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /home/szha0069/test_seq_files//sam_to_bam/EDM_TAGGCA_L001.bam     | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2
+picard MarkDuplicates INPUT=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered.bam OUTPUT=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.metrics REMOVE_DUPLICATES=true ASSUME_SORTED=true VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_2_output
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# ########## Finished at Sun Jan 28 23:17:44 UTC 2018 Duration = 1 minutes, 24.132 seconds ###########
+
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:42:06 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/8622.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam
+# ################ Finished at Sun Jan 28 23:42:09 UTC 2018 Duration = 2.471 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:42:16 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/8754.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam
+# ################ Finished at Sun Jan 28 23:42:19 UTC 2018 Duration = 2.480 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:42:46 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/8885.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam
+# ################ Finished at Sun Jan 28 23:42:48 UTC 2018 Duration = 2.464 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:43:07 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/9054.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam > /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001_samtools_flagstat.txt
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# ################ Finished at Sun Jan 28 23:43:11 UTC 2018 Duration = 3.800 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:43:23 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/9217.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# ################ Finished at Sun Jan 28 23:43:27 UTC 2018 Duration = 4.506 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Sun Jan 28 23:43:51 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/9417.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# ################ Finished at Sun Jan 28 23:43:55 UTC 2018 Duration = 4.077 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 00:49:29 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/23633.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# ################ Finished at Mon Jan 29 00:49:34 UTC 2018 Duration = 4.423 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 00:49:50 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/23794.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# ################ Finished at Mon Jan 29 00:49:55 UTC 2018 Duration = 4.734 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 00:50:30 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/24355.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# ################ Finished at Mon Jan 29 00:50:34 UTC 2018 Duration = 4.388 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 00:50:46 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/24513.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 00:51:15 UTC 2018 Duration = 28.569 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:03:31 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_002.fastq.gz]
+# Output Log:  .bpipe/logs/25781.log
+# Stage get_id
+# Stage trim_reads
+cutadapt -a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT -q 20 --minimum-length 36 -o /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_002_trimmed.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_002.fastq.gz | tee /cephfs/homes/biomate1/szha0069/test_seq_files/trim_reads/_trim_reads_output
+# Stage map_to_reference
+bowtie2 -X2000 --no-mixed --no-discordant -p 10 -x /home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_002_trimmed.fastq.gz -S /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam 3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/map_to_reference/_map_to_reference_output
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam > /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001_samtools_flagstat.txt
+picard SortSam SO=coordinate INPUT=/home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam OUTPUT=/home/szha0069/test_seq_files//sam_to_bam/EDM_TAGGCA_L001.bam CREATE_INDEX=true
+# Stage filter_reads_1
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /cephfs/homes/biomate1/szha0069/test_seq_files/sam_to_bam/EDM_TAGGCA_L001.bam     | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2
+picard MarkDuplicates INPUT=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered.bam OUTPUT=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.metrics REMOVE_DUPLICATES=true ASSUME_SORTED=true VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_2_output
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# ################ Finished at Mon Jan 29 01:04:29 UTC 2018 Duration = 58.525 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:18:00 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/27636.log
+# Stage get_id
+# Stage trim_reads
+cutadapt -a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT -q 20 --minimum-length 36 -o /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz | tee /cephfs/homes/biomate1/szha0069/test_seq_files/trim_reads/_trim_reads_output
+# Stage map_to_reference
+bowtie2 -X2000 --no-mixed --no-discordant -p 10 -x /home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz -S /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam 3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/map_to_reference/_map_to_reference_output
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam > /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001_samtools_flagstat.txt
+picard SortSam SO=coordinate INPUT=/home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam OUTPUT=/home/szha0069/test_seq_files//sam_to_bam/EDM_TAGGCA_L001.bam CREATE_INDEX=true
+# Stage filter_reads_1
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /cephfs/homes/biomate1/szha0069/test_seq_files/sam_to_bam/EDM_TAGGCA_L001.bam     | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2
+picard MarkDuplicates INPUT=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered.bam OUTPUT=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.metrics REMOVE_DUPLICATES=true ASSUME_SORTED=true VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_2_output
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# ########### Finished at Mon Jan 29 01:20:01 UTC 2018 Duration = 2 minutes, 1.122 seconds ###########
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:25:32 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/28987.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage homer_call_peaks (3)
+# Stage make_ucsc_gb_track (1)
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files//filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files//make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:29:55 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/29362.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage homer_call_peaks (3)
+# Stage make_tags (1)
+# Stage make_ucsc_gb_track (1)
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:30:28 UTC 2018 Duration = 32.147 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:31:08 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/29959.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage homer_call_peaks (3)
+# Stage make_ucsc_gb_track (1)
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:31:31 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/30237.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage homer_call_peaks (3)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:32:01 UTC 2018 Duration = 29.596 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:36:25 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/30928.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_tags (3)
+# Stage make_ucsc_gb_track (1)
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (3)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_homer_peaks.txt.homer_annotate_peaks
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:36:55 UTC 2018 Duration = 29.788 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:40:27 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/31652.log
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:41:21 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/31776.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (3)
+# Stage make_ucsc_gb_track (1)
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (3)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_homer_peaks.txt.homer_annotate_peaks
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:41:54 UTC 2018 Duration = 32.825 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:44:56 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/32080.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (3)
+# Stage homer_call_peaks (3)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (3)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt danRer10 > /home/szha0069/test_seq_files/_homer_annotate_peaks_homer_annotate_peaks
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/_homer_annotate_peaks_homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:45:27 UTC 2018 Duration = 30.778 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:46:37 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/32758.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_tags (3)
+# Stage make_ucsc_gb_track (1)
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_annotate_peaks (3)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt danRer10 --annStats /home/szha0069/test_seq_files/EDM_TAGGCA_L001_homer_peaks.txt.homer_annotate_peaks'.annstats' > /home/szha0069/test_seq_files/EDM_TAGGCA_L001_homer_peaks.txt.homer_annotate_peaks
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 --annStats /home/szha0069/test_seq_files/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks'.annstats' > /home/szha0069/test_seq_files/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:46:45 UTC 2018 Duration = 7.551 seconds #################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:49:24 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/533.log
+# Stage get_id
+# Stage trim_reads
+# Stage map_to_reference
+# Stage sam_to_bam (2)
+# Stage get_map_stats (1)
+# Stage filter_reads_1
+# Stage filter_reads_2
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (3)
+# Stage make_ucsc_gb_track (1)
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+# Stage homer_annotate_peaks (3)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt danRer10 > /home/szha0069/test_seq_files/EDM_TAGGCA_L001_homer_peaks.txt.homer_annotate_peaks
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# ################ Finished at Mon Jan 29 01:49:55 UTC 2018 Duration = 31.090 seconds ################
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 01:52:25 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/1286.log
+# Stage get_id
+# Stage trim_reads
+cutadapt -a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT -q 20 --minimum-length 36 -o /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz | tee /cephfs/homes/biomate1/szha0069/test_seq_files/trim_reads/_trim_reads_output
+# Stage map_to_reference
+bowtie2 -X2000 --no-mixed --no-discordant -p 10 -x /home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz -S /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam 3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/map_to_reference/_map_to_reference_output
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+picard SortSam SO=coordinate INPUT=/home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam OUTPUT=/home/szha0069/test_seq_files/sam_to_bam/EDM_TAGGCA_L001.bam CREATE_INDEX=true
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam > /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001_samtools_flagstat.txt
+# Stage filter_reads_1
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /cephfs/homes/biomate1/szha0069/test_seq_files/sam_to_bam/EDM_TAGGCA_L001.bam     | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2
+picard MarkDuplicates INPUT=/home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered.bam OUTPUT=/home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.metrics REMOVE_DUPLICATES=true ASSUME_SORTED=true VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_2_output
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (3)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# ########## Finished at Mon Jan 29 01:54:24 UTC 2018 Duration = 1 minutes, 58.423 seconds ###########
+
+
+####################################################################################################
+# Starting pipeline at Mon Jan 29 02:00:05 UTC 2018
+# Input files:  [/home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz, /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/2469.log
+# Stage get_id
+# Stage trim_reads
+cutadapt -a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT -q 20 --minimum-length 36 -o /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R1_001.fastq.gz /home/szha0069/test_seq_files/EDM_TAGGCA_L001_R2_001.fastq.gz | tee /cephfs/homes/biomate1/szha0069/test_seq_files/trim_reads/_trim_reads_output
+# Stage map_to_reference
+bowtie2 -X2000 --no-mixed --no-discordant -p 10 -x /home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/test_seq_files/trim_reads/EDM_TAGGCA_L001_R2_001_trimmed.fastq.gz -S /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam 3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/map_to_reference/_map_to_reference_output
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+samtools flagstat /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam > /home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001_samtools_flagstat.txt
+picard SortSam SO=coordinate INPUT=/home/szha0069/test_seq_files/map_to_reference/EDM_TAGGCA_L001.sam OUTPUT=/home/szha0069/test_seq_files/sam_to_bam/EDM_TAGGCA_L001.bam CREATE_INDEX=true
+# Stage filter_reads_1
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /cephfs/homes/biomate1/szha0069/test_seq_files/sam_to_bam/EDM_TAGGCA_L001.bam     | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2
+picard MarkDuplicates INPUT=/home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered.bam OUTPUT=/home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.metrics REMOVE_DUPLICATES=true ASSUME_SORTED=true VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true | tee /cephfs/homes/biomate1/szha0069/test_seq_files/filter_reads/_filter_reads_2_output
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_tags (3)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+macs2 callpeak --nomodel -t /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam -n EDM_TAGGCA_L001 --keep-dup all --gsize 11250000000 --shift -37 --extsize 73 --outdir /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks -B
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/test_seq_files/filter_reads/EDM_TAGGCA_L001_filtered_dedup.bam | tee /cephfs/homes/biomate1/szha0069/test_seq_files/make_tags/_make_tags_output
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/test_seq_files/macs2_call_peaks/EDM_TAGGCA_L001_summits.bed danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_summits.bed.homer_annotate_peaks
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -o /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/EDM_TAGGCA_L001_track -fsize 1e10 -name EDM_TAGGCA_L001 | tee /cephfs/homes/biomate1/szha0069/test_seq_files/ucsc_track/_make_ucsc_gb_track_output
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/test_seq_files/make_tags/EDM_TAGGCA_L001_tags -style factor -o /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt
+# Stage homer_annotate_peaks (3)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /home/szha0069/test_seq_files/homer_call_peaks/EDM_TAGGCA_L001_homer_peaks.txt danRer10 > /home/szha0069/test_seq_files/homer_annotate_peaks/EDM_TAGGCA_L001_homer_peaks.txt.homer_annotate_peaks
+# ########## Finished at Mon Jan 29 02:02:24 UTC 2018 Duration = 2 minutes, 19.735 seconds ###########
+

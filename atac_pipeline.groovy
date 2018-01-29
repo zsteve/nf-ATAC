@@ -21,7 +21,7 @@ run_id = "default"
 trim_reads = {
   /* trim reads for both R1 and R2 */
   output.dir = output_dir + '/' + 'trim_reads'
-  transform('*.fastq.gz') to ('_filtered.fastq.gz'){
+  transform('*.fastq.gz') to ('_trimmed.fastq.gz'){
     exec """
         cutadapt -a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT
         -q 20
@@ -50,9 +50,19 @@ map_to_reference = {
   }
 }
 
+get_map_stats = {
+  /* use samtools flagstat to retrieve mapping stats */
+  output.dir = output_dir + '/map_to_reference'
+  produce(run_id + '_samtools_flagstat.txt'){
+      exec """
+        samtools flagstat $input > $output
+      """
+  }
+}
+
 sam_to_bam = {
   /* convert sam (reads_mapped.sam) to bam */
-  output.dir = output_dir + '/' + '/sam_to_bam'
+  output.dir = output_dir + '/' + 'sam_to_bam'
   transform('*.sam') to ('.bam'){
     exec """ picard SortSam SO=coordinate
 		INPUT=$input
@@ -62,9 +72,12 @@ sam_to_bam = {
   }
 }
 
+
+/* filter_reads_1 and filter_reads_2 provide read filtering */
+
 filter_reads_1 = {
   /* discard mitoc reads and multimappers */
-  output.dir = output_dir + '/' + '/filter_reads'
+  output.dir = output_dir + '/' + 'filter_reads'
   transform('*.bam') to ('_filtered.bam'){
   exec """
   java -jar $jvarkit_path/samjs.jar
@@ -79,7 +92,7 @@ filter_reads_1 = {
 
 filter_reads_2 = {
   /* now discard duplicates */
-  output.dir = output_dir + '/' + '/filter_reads'
+  output.dir = output_dir + '/' + 'filter_reads'
   transform('*.bam') to ('_dedup.bam', '_dedup.metrics'){
     exec """
       picard MarkDuplicates
@@ -95,8 +108,10 @@ filter_reads_2 = {
   }
 }
 
+/* after filter_reads_1 and filter_reads_2 */
+
 make_tags = {
-  output.dir = output_dir + '/' + '/make_tags'
+  output.dir = output_dir + '/' + 'make_tags'
   produce(run_id+'_tags'){
     exec """
       $homer_path/makeTagDirectory
@@ -109,7 +124,7 @@ make_tags = {
 }
 
 make_ucsc_gb_track = {
-  output.dir = output_dir + '/' + '/ucsc_track'
+  output.dir = output_dir + '/' + 'ucsc_track'
   out_track_name = output.dir+'/'+run_id+'_track'
 	exec """
 		$homer_path/makeUCSCfile
@@ -137,6 +152,28 @@ macs2_call_peaks = {
     --outdir $output.dir
     -B
   """
+  forward(output.dir + '/'+run_id+'_summits.bed')
+}
+
+// call with output from make_tags
+homer_call_peaks = {
+  produce(run_id+'_homer_peaks.txt'){
+    output.dir = output_dir + '/homer_call_peaks'
+    exec """
+      $homer_path/findPeaks
+      $input.dir
+      -style factor
+      -o $output
+    """
+  }
+}
+
+// annotate peaks using homer annotatePeaks.pl
+homer_annotate_peaks = {
+  output.dir = output_dir + '/homer_annotate_peaks'
+  exec """
+    $homer_path/annotatePeaks.pl $input danRer10 > $output
+  """
 }
 
 get_id = {
@@ -147,6 +184,7 @@ get_id = {
 
 run {
   /* get run ID */
-  get_id + trim_reads + map_to_reference + sam_to_bam + filter_reads_1 + \
-  filter_reads_2 + [make_tags + make_ucsc_gb_track, macs2_call_peaks]
+  get_id + trim_reads + map_to_reference + [get_map_stats, sam_to_bam] + filter_reads_1 + \
+  filter_reads_2 + [make_tags + make_ucsc_gb_track, macs2_call_peaks + homer_annotate_peaks,\
+  make_tags + homer_call_peaks + homer_annotate_peaks]
 }
