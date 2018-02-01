@@ -1,0 +1,2 @@
+--samoutputformat bam
+-e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'

@@ -1,0 +1,4 @@
+-a CTGTCTCTTATACACATCT -A CTGTCTCTTATACACATCT
+--info-file=cutadapt_info_file
+-q 20
+--minimum-length 36
