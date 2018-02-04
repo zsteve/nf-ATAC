@@ -1,4 +1,13 @@
+/*
+ * ATAC-seq pipeline
+ * Written in Nextflow
+ * Stephen Zhang, 4 Feb 2018
+ */
+
 params.help = false
+/* multisample flag - if set, then we will handle sample table */
+params.multiSample = false
+params.sampleTable = '' // must pass if we want to process multiple samples
 params.inputDir = ''
 params.numCpus = 8
 params.refGenomeIndex = ''
@@ -6,37 +15,93 @@ params.refGenomeFasta = ''
 params.refGenomeName=''
 
 /*
-nextflow atac_pipeline.nf --inpu
-t-dir test_samples/EDM_TAGGCA_L001/ --num-cpus 8
---ref-genome-index /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome
---ref-genome-fasta /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa
- --ref-genome-name danRer10 -resume
+nextflow atac_pipeline.nf --input-dir test_samples/EDM_TAGGCA_L001/ --num-cpus 8 --ref-genome-index /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome --ref-genome-fasta /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa --ref-genome-name danRer10 -resume
 */
 
 params.jvarkitPath = "~/tools/jvarkit/dist"
 params.homerPath = "/home/szha0069/tools/homer/bin"
 
-inputDir = params.inputDir
+def getReadPairFromSampleDir(sampleDir){
+  /* does what it says!
+    sampleDir is a string specifying the path of the base directory
+    Returns [read1_path, read2_path]
+    */
+  if(sampleDir.endsWith('/')){
+    sampleDir = sampleDir.substring(0, sampleDir.length()-1)
+  }
+
+  def files = file(sampleDir).list()
+  def read1_path = ''
+  def read2_path = ''
+  for( i in files ){
+    if(i.contains('_R1')){
+      read1_path += i
+      break
+    }
+  }
+  for( i in files ){
+    if(i.contains('_R2')){
+      read2_path+=i
+      break
+    }
+  }
+  // sanity check to see if R1 and R2 were both found!
+  if(read1_path == '' || read2_path == ''){
+    println "Error - didn't find R1/R2 pair in directory: $sampleDir"
+  }
+  read1_path = sampleDir + '/' + read1_path
+  read2_path = sampleDir + '/' + read2_path
+  return ["R1":read1_path, "R2":read2_path]
+}
+
+if(params.multiSample){
+  /*
+    Load sample table
+    Format:
+    [Sample_ID] [Sample_directory]
+  */
+  sampleTable = file(params.sampleTable)
+  Channel.from(sampleTable.readLines())
+        .map{
+          line ->
+          def entries = line.tokenize()
+          read_paths = getReadPairFromSampleDir(entries[1])
+          // format:
+          // [[ID=sampleID, baseDir=sample_folder], [read1, read2]]
+          [["ID":entries[0], "baseDir":entries[1]], [file(read_paths["R1"]), file(read_paths["R2"])]]
+        }
+        .into{readPairOut; readPairOut_FQC}
+}else{
+  inputDir = params.inputDir
+  if(inputDir.endsWith('/')){
+    inputDir = inputDir.substring(0, inputDir.size()-1)
+    //println inputDir
+  }
+
+  /* call on directory containing read pairs */
+  // Channel.fromFilePairs("$inputDir/*_R{1,2}*.fastq.gz")
+  //       .into{readPairOut; readPairOut_FQC}
+
+  Channel.from(inputDir)
+    .map{dir ->
+        def sampleID = file(inputDir).getBaseName().toString()
+        read_paths = getReadPairFromSampleDir(dir)
+        [["ID":sampleID, "baseDir":dir], [file(read_paths["R1"]), file(read_paths["R2"])]]}
+    .into{readPairOut; readPairOut_FQC}
+}
 
 if(params.help){
-  // help here
+  // help!
+  exit 0
 }
-
-if(inputDir.endsWith('/')){
-  inputDir = inputDir.substring(0, inputDir.size()-1)
-  println inputDir
-}
-
-/* call on directory containing read pairs */
-Channel.fromFilePairs("$inputDir/*_R{1,2}*.fastq.gz")
-      .into{readPairOut; readPairOut_FQC}
 
 process sampleFastQC {
   //echo true
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   input:
-    set val(name), file(reads) from readPairOut_FQC
+    set val(sampleInfo), file(reads) from readPairOut_FQC
   output:
+    file '*'
     file 'fastqc_output' into fastQCReport
   script:
     """mkdir -p fastqc_output;
@@ -46,11 +111,12 @@ process sampleFastQC {
 }
 
 process sampleCutadapt {
-  //echo true
+  echo true
   input:
-    set val(name), file(reads) from readPairOut
+    set val(sampleInfo), file(reads) from readPairOut
   output:
-    set val(name), file('cutadapt_output/*_trimmed*') into trimmedPairOut
+    file 'cutadapt_output/*'
+    set val(sampleInfo), file('cutadapt_output/*_trimmed*') into trimmedPairOut
   // obtain read1 and read2 filenames
   script:
     read1_trimmed_name = file(reads[0]).getName().toString().replaceAll(/_R1/, '_R1_trimmed')
@@ -71,13 +137,14 @@ process sampleCutadapt {
 process sampleMapToReference {
   /* use bowtie2 for mapping */
   //echo true
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   input:
-    set val(name), file(reads) from trimmedPairOut
+    set val(sampleInfo), file(reads) from trimmedPairOut
   output:
-    set val(name), file('bowtie2_output/*.sam') into mappedSamOut
+    file 'bowtie2_output/*'
+    set val(sampleInfo), file('bowtie2_output/*.sam') into mappedSamOut
   script:
-    output_sam_name = name+'.sam'
+    output_sam_name = sampleInfo["ID"]+'.sam'
     """
     mkdir -p bowtie2_output;
     bowtie2 -X2000 --no-mixed --no-discordant\
@@ -92,28 +159,32 @@ process sampleMapToReference {
 
 process sampleSamToBam {
   //echo true
+  publishDir {sampleInfo["baseDir"]}
+  echo true
   input:
-    set val(name), file(samFile) from mappedSamOut
+    set val(sampleInfo), file(samFile) from mappedSamOut
   output:
-    set val(name), file('*.bam') into mappedBamOut_getStat, mappedBamOut
+    file 'samtobam_output/*'
+    set val(sampleInfo), file('samtobam_output/*.bam') into mappedBamOut_getStat, mappedBamOut
   script:
-    output_bam_name = name + '.bam'
+    output_bam_name = sampleInfo["ID"] + '.bam'
     """
-      picard SortSam SO=coordinate INPUT=$samFile OUTPUT=$output_bam_name\
-      CREATE_INDEX=true\
-      > picard_sortsam.stdout 2> picard_sortsam.stderr
+      mkdir -p samtobam_output; touch samtobam_output/test;
+      picard SortSam SO=coordinate INPUT=$samFile OUTPUT=samtobam_output/$output_bam_name CREATE_INDEX=true\
+      > samtobam_output/picard_sortsam.stdout 2> samtobam_output/picard_sortsam.stderr
     """
 }
 
 process sampleGetMapStats {
   //echo true
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   input:
-    set val(name), file(bamFile) from mappedBamOut_getStat
+    set val(sampleInfo), file(bamFile) from mappedBamOut_getStat
   output:
+    file 'flagstat_output/*'
     file 'flagstat_output/*_flagstat.txt' into flagStatOut
   script:
-    output_flagstat_name = name + '_flagstat.txt'
+    output_flagstat_name = sampleInfo["ID"] + '_flagstat.txt'
     """
       mkdir -p flagstat_output;
       samtools flagstat $bamFile > flagstat_output/$output_flagstat_name\
@@ -125,11 +196,11 @@ process sampleFilterMMMR {
   // filter multimappers and mitochondrial reads
   //echo true
   input:
-    set val(name), file(bamFile) from mappedBamOut
+    set val(sampleInfo), file(bamFile) from mappedBamOut
   output:
-    set val(name), file('*_filtered_MMMR.bam') into filteredMMMROut
+    set val(sampleInfo), file('*_filtered_MMMR.bam') into filteredMMMROut
   script:
-    output_bam_name = name + '_filtered_MMMR.bam'
+    output_bam_name = sampleInfo["ID"] + '_filtered_MMMR.bam'
     """
       java -jar $params.jvarkitPath/samjs.jar\
       --samoutputformat bam\
@@ -142,13 +213,13 @@ process sampleFilterMMMR {
 process sampleFilterDedup {
   // discard duplicate reads
   input:
-    set val(name), file(bamFile) from filteredMMMROut
+    set val(sampleInfo), file(bamFile) from filteredMMMROut
   output:
-    set val(name), file('*_dedup.bam') into filteredDedupOut_makeTags, \
+    set val(sampleInfo), file('*_dedup.bam') into filteredDedupOut_makeTags, \
                           filteredDedupOut_callPeaks_MACS
   script:
-    output_bam_name = name + '_dedup.bam'
-    output_metrics_name = name + '_dedup_metrics'
+    output_bam_name = sampleInfo["ID"] + '_dedup.bam'
+    output_metrics_name = sampleInfo["ID"] + '_dedup_metrics'
     """
       picard MarkDuplicates\
       INPUT=$bamFile\
@@ -164,11 +235,11 @@ process sampleFilterDedup {
 
 
 process sampleMakeTags {
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   input:
-    set val(name), file(bamFile) from filteredDedupOut_makeTags
+    set val(sampleInfo), file(bamFile) from filteredDedupOut_makeTags
   output:
-    set val(name), file('maketags_output') into makeTagsOut, makeTagsOut_callPeaks_homer
+    set val(sampleInfo), file('maketags_output') into makeTagsOut, makeTagsOut_callPeaks_homer
   script:
     """
     $params.homerPath/makeTagDirectory\
@@ -181,13 +252,14 @@ process sampleMakeTags {
 
 process sampleMakeUCSCTrack {
   //echo true
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   input:
-    set val(name), file(tagDir) from makeTagsOut
+    set val(sampleInfo), file(tagDir) from makeTagsOut
   output:
+    file "makeUCSCtrack_output/*"
     file "makeUCSCtrack_output/*.bedgraph.gz" into makeUCSCTrackOut
   script:
-    output_track_name = name + '_UCSC.bedgraph'
+    output_track_name = sampleInfo["ID"] + '_UCSC.bedgraph'
     """
     mkdir -p makeUCSCtrack_output;
     $params.homerPath/makeUCSCfile $tagDir -o makeUCSCtrack_output/$output_track_name\
@@ -198,17 +270,19 @@ process sampleMakeUCSCTrack {
 }
 
 process sampleMACS2CallPeaks {
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
+  echo true
   input:
-    set val(name), file(bamFile) from filteredDedupOut_callPeaks_MACS
+    set val(sampleInfo), file(bamFile) from filteredDedupOut_callPeaks_MACS
   output:
-    set val(name), file("macs2_output/*.xls") into outputMACS2_xlsPeaks
+    file "macs2_output/*"
+    set val(sampleInfo), file("macs2_output/*.xls") into outputMACS2_xlsPeaks
   script:
     """
     mkdir -p macs2_output;
     macs2 callpeak --nomodel\
     -t $bamFile\
-    -n $name\
+    -n ${sampleInfo["ID"]}\
     --keep-dup all\
     --gsize 11250000000\
     --shift -37\
@@ -219,14 +293,15 @@ process sampleMACS2CallPeaks {
 }
 
 process sampleHomerCallPeaks {
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   errorStrategy 'ignore'
   input:
-    set val(name), file(tagDir) from makeTagsOut_callPeaks_homer
+    set val(sampleInfo), file(tagDir) from makeTagsOut_callPeaks_homer
   output:
+    file 'homer_findpeaks_output/*'
     file 'homer_findpeaks_output/*.txt' into outputHomerFindpeaks
   script:
-    output_name = name + '_homer_findpeaks.txt'
+    output_name = sampleInfo["ID"] + '_homer_findpeaks.txt'
   """
     $params.homerPath/findPeaks\
     $tagDir
@@ -237,13 +312,14 @@ process sampleHomerCallPeaks {
 }
 
 process sampleAnnotatePeaks {
-  publishDir inputDir
+  publishDir {sampleInfo["baseDir"]}
   input:
-    set val(name), file(xlsFile) from outputMACS2_xlsPeaks
+    set val(sampleInfo), file(xlsFile) from outputMACS2_xlsPeaks
   output:
-    set val(name), file("homer_annotatepeaks_output/$annotationFile") into outputAnnotatePeaks
+    file 'homer_annotatepeaks_output/*'
+    set val(sampleInfo), file("homer_annotatepeaks_output/$annotationFile") into outputAnnotatePeaks
   script:
-    annotationFile = name + '_annotation.txt'
+    annotationFile = sampleInfo["ID"] + '_annotation.txt'
     """
     mkdir -p homer_annotatepeaks_output;
     $params.homerPath/annotatePeaks.pl\

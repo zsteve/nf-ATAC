@@ -15,13 +15,15 @@ ml load bowtie2
 ml load picard/2.8.2
 ml load samtools
 
-nf_script_path="./atac_pipeline.nf"
+nf_script_path="/home/szha0069/armi-rossello/atac-seq-pipeline/atac_pipeline.nf"
 
 for i in $sample_dir/*/; do
+  cd $i
   echo $i
-  nextflow $nf_script_path --input-dir $i\
+  nextflow $nf_script_path --input-dir .\
       --num-cpus $num_cpus\
       --ref-genome-index $ref_genome_index\
       --ref-genome-fasta $ref_genome_fasta\
       --ref-genome-name $ref_genome_name &
+  cd ..
 done

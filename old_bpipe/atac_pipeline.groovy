@@ -13,8 +13,8 @@ jvarkit_path="~/tools/jvarkit/dist"
 homer_path="/home/szha0069/tools/homer/bin"
 
 /* reference file paths */
-ref_genome_index="/home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome"
-ref_genome_fasta="~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa"
+ref_genome_index="/home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome"
+ref_genome_fa = "/home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa"
 
 run_id = "default"
 

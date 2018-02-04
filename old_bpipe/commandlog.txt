@@ -1,0 +1,84 @@
+
+####################################################################################################
+# Starting pipeline at Thu Feb 01 22:05:17 UTC 2018
+# Input files:  [/home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz, /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/31854.log
+# Stage get_id
+# Stage fastqc (2)
+# Stage trim_reads (1)
+cutadapt $(cat params/cutadapt.params) -o /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R2_001_trimmed.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz | tee /cephfs/homes/biomate1/szha0069/WT_sample/trim_reads/_trim_reads_output
+fastqc $(cat params/fastqc.params) -o /cephfs/homes/biomate1/szha0069/WT_sample/fastqc /home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz
+# Stage map_to_reference (1)
+bowtie2 $(cat params/bowtie2.params) -p 4 -x /home/szha0069/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R2_001_trimmed.fastq.gz -S /home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001.sam       3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/WT_sample/map_to_reference/WT_TAAGGC_L001'_map_to_reference_output'
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+picard SortSam INPUT=/home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001.sam OUTPUT=/home/szha0069/WT_sample//sam_to_bam/WT_TAAGGC_L001.bam $(cat params/picard_sortsam.params)
+samtools flagstat $(cat params/samtools_flagstat.params) /home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001.sam > /home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001_samtools_flagstat.txt
+# Stage filter_reads_1 (1)
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /cephfs/homes/biomate1/szha0069/WT_sample/sam_to_bam/WT_TAAGGC_L001.bam     | tee /cephfs/homes/biomate1/szha0069/WT_sample/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2 (1)
+picard MarkDuplicates INPUT=/home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered.bam OUTPUT=/home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.metrics $(cat params/picard_markduplicates.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/filter_reads/_filter_reads_2_output
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (3)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam $(params/homer_maketagdirectory.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/make_tags/_make_tags_output
+macs2 callpeak -t /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam -n WT_TAAGGC_L001 --outdir /cephfs/homes/biomate1/szha0069/WT_sample/macs2_call_peaks $(cat params/macs2_callpeaks.params)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -genome ~/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa -checkGC /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam $(params/homer_maketagdirectory.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/make_tags/_make_tags_output
+# Stage homer_call_peaks (3)
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -o /home/szha0069/WT_sample//homer_call_peaks/WT_TAAGGC_L001_homer_peaks.txt $(cat params/homer_findpeaks.params)
+# Stage make_ucsc_gb_track (1)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -o /cephfs/homes/biomate1/szha0069/WT_sample/ucsc_track/WT_TAAGGC_L001_track -name WT_TAAGGC_L001 $(params/homer_makeucscfile.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/ucsc_track/_make_ucsc_gb_track_output
+# ########## Finished at Thu Feb 01 22:07:37 UTC 2018 Duration = 2 minutes, 19.976 seconds ###########
+
+
+####################################################################################################
+# Starting pipeline at Thu Feb 01 22:10:19 UTC 2018
+# Input files:  [/home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz, /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/319.log
+# Stage get_id
+# Stage fastqc (2)
+# Stage trim_reads (1)
+# Stage map_to_reference (1)
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+# Stage filter_reads_1 (1)
+fastqc $(cat params/fastqc.params) -o /cephfs/homes/biomate1/szha0069/WT_sample/fastqc /home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz
+# Stage filter_reads_2 (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (1)
+# Stage make_tags (3)
+# Stage homer_call_peaks (3)
+# Stage make_ucsc_gb_track (1)
+macs2 callpeak -t /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam -n WT_TAAGGC_L001 --outdir /cephfs/homes/biomate1/szha0069/WT_sample/macs2_call_peaks $(cat params/macs2_callpeaks.params)
+/home/szha0069/tools/homer/bin/makeUCSCfile /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -o /cephfs/homes/biomate1/szha0069/WT_sample/ucsc_track/WT_TAAGGC_L001_track -name WT_TAAGGC_L001 $(params/homer_makeucscfile.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/ucsc_track/_make_ucsc_gb_track_output
+/home/szha0069/tools/homer/bin/findPeaks /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -o /home/szha0069/WT_sample//homer_call_peaks/WT_TAAGGC_L001_homer_peaks.txt $(cat params/homer_findpeaks.params)
+
+####################################################################################################
+# Starting pipeline at Thu Feb 01 22:16:25 UTC 2018
+# Input files:  [/home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz, /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz]
+# Output Log:  .bpipe/logs/1155.log
+# Stage get_id
+# Stage fastqc (2)
+# Stage trim_reads (1)
+fastqc $(cat params/fastqc.params) -o /cephfs/homes/biomate1/szha0069/WT_sample/fastqc /home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz
+cutadapt $(cat params/cutadapt.params) -o /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R1_001_trimmed.fastq.gz -p /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R2_001_trimmed.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R1_001.fastq.gz /home/szha0069/WT_sample/WT_TAAGGC_L001_R2_001.fastq.gz | tee /cephfs/homes/biomate1/szha0069/WT_sample/trim_reads/_trim_reads_output
+# Stage map_to_reference (1)
+bowtie2 $(cat params/bowtie2.params) -p 4 -x /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome -1 /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R1_001_trimmed.fastq.gz -2 /home/szha0069/WT_sample//trim_reads/WT_TAAGGC_L001_R2_001_trimmed.fastq.gz -S /home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001.sam       3>&1 1>&2 2>&3 | tee /cephfs/homes/biomate1/szha0069/WT_sample/map_to_reference/WT_TAAGGC_L001'_map_to_reference_output'
+# Stage get_map_stats (1)
+# Stage sam_to_bam (2)
+samtools flagstat $(cat params/samtools_flagstat.params) /home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001.sam > /home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001_samtools_flagstat.txt
+picard SortSam INPUT=/home/szha0069/WT_sample//map_to_reference/WT_TAAGGC_L001.sam OUTPUT=/home/szha0069/WT_sample//sam_to_bam/WT_TAAGGC_L001.bam $(cat params/picard_sortsam.params)
+# Stage filter_reads_1 (1)
+java -jar ~/tools/jvarkit/dist/samjs.jar --samoutputformat bam -o /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered.bam     -e '!(record.getReadUnmappedFlag() || record.getReferenceName().equals("chrM") || record.getMappingQuality() < 10)'     /cephfs/homes/biomate1/szha0069/WT_sample/sam_to_bam/WT_TAAGGC_L001.bam     | tee /cephfs/homes/biomate1/szha0069/WT_sample/filter_reads/_filter_reads_1_output
+# Stage filter_reads_2 (1)
+picard MarkDuplicates INPUT=/home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered.bam OUTPUT=/home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam METRICS_FILE=/home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.metrics $(cat params/picard_markduplicates.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/filter_reads/_filter_reads_2_output
+# Stage make_tags (1)
+# Stage macs2_call_peaks (2)
+# Stage make_tags (3)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -genome $ref_genome_fasta -checkGC /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam $(params/homer_maketagdirectory.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/make_tags/_make_tags_output
+macs2 callpeak -t /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam -n WT_TAAGGC_L001 --outdir /cephfs/homes/biomate1/szha0069/WT_sample/macs2_call_peaks $(cat params/macs2_callpeaks.params)
+/home/szha0069/tools/homer/bin/makeTagDirectory /home/szha0069/WT_sample//make_tags/WT_TAAGGC_L001_tags -genome $ref_genome_fasta -checkGC /home/szha0069/WT_sample//filter_reads/WT_TAAGGC_L001_filtered_dedup.bam $(params/homer_maketagdirectory.params) | tee /cephfs/homes/biomate1/szha0069/WT_sample/make_tags/_make_tags_output
+# Stage homer_annotate_peaks (2)
+/home/szha0069/tools/homer/bin/annotatePeaks.pl /cephfs/homes/biomate1/szha0069/WT_sample/macs2_call_peaks/WT_TAAGGC_L001_summits.bed $(cat params/homer_annotatepeaks.params) > /home/szha0069/WT_sample//homer_annotate_peaks/WT_TAAGGC_L001_summits.bed.homer_annotate_peaks
+# ########## Finished at Thu Feb 01 22:32:39 UTC 2018 Duration = 16 minutes, 13.945 seconds ##########
+
