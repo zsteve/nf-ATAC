@@ -19,6 +19,11 @@ Please make sure these tools are installed before running the pipeline:
 * `bowtie2`
 * `picard/2.8.2`
 * `samtools`
+* `homer`
+* `snakeyaml` (please download from https://bitbucket.org/asomov/snakeyaml/wiki/Documentation and add to $CLASSPATH)
+
+One can check that most dependencies are installed by running `checkdep.sh`.
+*At the current time, please manually confirm that `snakeyaml` is installed!
 
 *Installing Nextflow*
 
