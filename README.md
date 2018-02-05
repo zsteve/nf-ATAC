@@ -1,45 +1,65 @@
 **ATAC-seq pipeline**
-Author:		Stephen Zhang
-Date:		1 Feb 2018
+Author:		Stephen Zhang (stephen.zhang@monash.edu)
+Date:		5 Feb 2018
+
 
 ____
 
 *Introduction*
-This is a pipeline for processing of ATAC-seq data written in Nextflow script. Currently in early stages, this `README` will definitely be updated regularly!
+A pipeline for processing ATAC-seq data written in Nextflow script (https://www.nextflow.io/).
+Currently in early stages, this `README` will definitely be updated regularly (check often!)
 
-*Scripts*
+Have an problem? Please log an issue on GitHub (https://github.com/zsteve/atac-seq-pipeline)
 
-Nextflow script can be used directly:
+*Dependencies*
+Please make sure these tools are installed before running the pipeline:
+
+* `FastQC`
+* `cutadapt`
+* `bowtie2`
+* `picard/2.8.2`
+* `samtools`
+
+*Installing Nextflow*
+
+Nextflow can be downloaded by using the following command:
+
+`curl -s https://get.nextflow.io | bash`
+
+This will create a binary `nextflow` in the working directory. You can add this binary to your `PATH` for ease of use:
+
+`export PATH=$PATH:[your path here]
+
+The pipeline can be executed by running `nextflow`, specifying the script and relevant commandline arguments.
+
+`nextflow <script>.nf <command line arguments>`
+
+*Running the pipeline - single sample*
+
+_Data preparation_
+
+Paired-end read sample data in `.fastq.gz` format should be located in a directory with the desired sample name. Read pairs should be distinguishable in the format `*_R{1,2}*.fastq.gz`.
+
+_Command_
+
+Nextflow will create a `work` directory (containing pipeline data) in its working directory (i.e. `.`). Final pipeline output files will be output to a desired directory, however these will generally be _symlinks_ to the actual copy of the file within `work/**/your_file_here`. It is *very* important that `work` does *not* get deleted - otherwise your symlinks will mean nothing!
+
 ```
-nextflow atac_pipeline.nf [--help] --input-dir <...>
-			--num_cpus $NUMCPUS
-            --ref-genome-index $REFGENOME_INDEX
-            --ref-genome-fasta $REFGENOMEFA
-            --ref-genome-name $REFGENOMENAME
+
+nextflow atac_pipeline.nf --num-cpus $NUM_CPUS 
+			  --input-dir $INPUT_DIR
+			  --ref-genome-name $GENOME_NAME
+			  --ref-genome-index $GENOME_INDEX
+			  --ref-genome-fasta $GENOME_FASTA
 
 ```
 
-* `--input-dir` specifies a directory containing paired-end `.fastq.gz` files matching the glob `*_R{1,2}*.fastq.gz`.
-* `atac_pipeline.nf` will produce a set of folders containing outputs inside the input directory.
+* `NUM_CPUS` - maximum number of CPUs to use for the _entire_ pipeline
+* `INPUT_DIR` - path of the directory containing R1,R2 data
+* `GENOME_NAME` - name of the reference genome (e.g. `danRer10`, `hg18`)
+* `GENOME_INDEX` - path to `bowtie2` indexes for reference genome
+* `GENOME_FASTA` - path to `FASTA` sequence of reference genome
 
-Alternatively, if you have a set of _N_ samples following the directory hierarchy, use `atac_pipeline_multisample_wrapper.sh`
-```
-sample_dir/
-	sample1/
-    	*_R{1,2}*.fastq.gz
-    ...
-    sampleN/
-    	*R{1,2}*.fastq.gz
-```
+Nextflow will output its data to your directory of choice.
 
-`atac_pipeline_multisample_wrapper.sh` takes arguments specified as follows:
 
-```
-atac_pipeline_multisample_wrapper.sh [sample_dir]
-			[num_cpus]
-            [ref_genome_name]
-            [ref_genome_index]
-            [ref_genome_fasta]
-```
-
-* In this instance, `[sample_dir]` points the _top level_ directory. Subdirectories represent samples, which in turn contain `.fastq.gz` read data.

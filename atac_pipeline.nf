@@ -1,7 +1,7 @@
 /*
  * ATAC-seq pipeline
  * Written in Nextflow
- * Stephen Zhang, 4 Feb 2018
+ * Stephen Zhang (stephen.zhang@monash.edu), Feb 2018
  */
 
 params.help = false
@@ -9,12 +9,14 @@ params.help = false
 params.multiSample = false
 params.sampleTable = '' // must pass if we want to process multiple samples
 params.inputDir = ''
+params.outputDir = ''
 params.numCpus = 8
 params.refGenomeIndex = ''
 params.refGenomeFasta = ''
 params.refGenomeName=''
 
-// default command-line parameters
+// default command-line parameters for tools we want to use in pipeline
+
 def def_cmd_params = [:]
 def_cmd_params["fastqc"] = [:]
 def_cmd_params["cutadapt"] = ["-a":"CTGTCTCTTATACACATCT",
@@ -96,11 +98,19 @@ def getReadPairFromSampleDir(sampleDir){
   return ["R1":read1_path, "R2":read2_path]
 }
 
+def regularizeDirPath(String path){
+	/* regularise directory path - removes trailing '/' if there is one. */
+	if(path.endsWith('/')){
+		path = path.substring(0, path.size()-1)
+	}
+	return path
+}
+
 if(params.multiSample){
   /*
     Load sample table
     Format:
-    [Sample_ID] [Sample_directory]
+    [Sample_ID] [Sample_input_directory] [Sample_output_directory]
   */
   sampleTable = file(params.sampleTable)
   Channel.from(sampleTable.readLines())
@@ -108,38 +118,42 @@ if(params.multiSample){
           line ->
           def entries = line.tokenize()
           read_paths = getReadPairFromSampleDir(entries[1])
+	  // create the output directory if it doesn't already exist
+	  file(entries[2]).mkdir()
           // format:
           // [[ID=sampleID, baseDir=sample_folder], [read1, read2]]
-          [["ID":entries[0], "baseDir":entries[1]], [file(read_paths["R1"]), file(read_paths["R2"])]]
+          [["ID":entries[0], "baseDir":entries[1], "baseDirOut":entries[2]], [file(read_paths["R1"]), file(read_paths["R2"])]]
         }
         .into{readPairOut; readPairOut_FQC}
 }else{
-  inputDir = params.inputDir
-  if(inputDir.endsWith('/')){
-    inputDir = inputDir.substring(0, inputDir.size()-1)
-    //println inputDir
-  }
-
+  inputDir = regularizeDirPath(params.inputDir)
+  outputDir = regularizeDirPath(params.outputDir)
   /* call on directory containing read pairs */
   // Channel.fromFilePairs("$inputDir/*_R{1,2}*.fastq.gz")
   //       .into{readPairOut; readPairOut_FQC}
-
-  Channel.from(inputDir)
+  println([inputDir, outputDir])
+  Channel.value([inputDir, outputDir])
     .map{dir ->
-        def sampleID = file(inputDir).getBaseName().toString()
-        read_paths = getReadPairFromSampleDir(dir)
-        [["ID":sampleID, "baseDir":dir], [file(read_paths["R1"]), file(read_paths["R2"])]]}
+    	def inputDir = dir[0]
+	def outputDir = dir[1]
+	def sampleID = file(inputDir).getBaseName().toString()
+        file(outputDir).mkdir()
+	read_paths = getReadPairFromSampleDir(inputDir)
+        [["ID":sampleID, "baseDir":inputDir, "baseDirOut":outputDir], [file(read_paths["R1"]), file(read_paths["R2"])]]}
     .into{readPairOut; readPairOut_FQC}
 }
 
 if(params.help){
-  // help!
+  /*
+	TODO: print help message
+  */
+
   exit 0
 }
 
 process sampleFastQC {
   //echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(reads) from readPairOut_FQC
   output:
@@ -154,7 +168,7 @@ process sampleFastQC {
 
 process sampleCutadapt {
   // echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(reads) from readPairOut
   output:
@@ -180,7 +194,7 @@ process sampleCutadapt {
 process sampleMapToReference {
   /* use bowtie2 for mapping */
   //echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(reads) from trimmedPairOut
   output:
@@ -204,7 +218,7 @@ process sampleMapToReference {
 
 process sampleSamToBam {
   //echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   echo true
   input:
     set val(sampleInfo), file(samFile) from mappedSamOut
@@ -222,7 +236,7 @@ process sampleSamToBam {
 
 process sampleGetMapStats {
   //echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(bamFile) from mappedBamOut_getStat
   output:
@@ -240,7 +254,7 @@ process sampleGetMapStats {
 process sampleFilterMMMR {
   // filter multimappers and mitochondrial reads
   //echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(bamFile) from mappedBamOut
   output:
@@ -260,7 +274,7 @@ process sampleFilterMMMR {
 
 process sampleFilterDedup {
   // discard duplicate reads
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(bamFile) from filteredMMMROut
   output:
@@ -286,7 +300,7 @@ process sampleFilterDedup {
 
 
 process sampleMakeTags {
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(bamFile) from filteredDedupOut_makeTags
   output:
@@ -303,7 +317,7 @@ process sampleMakeTags {
 
 process sampleMakeUCSCTrack {
   //echo true
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(tagDir) from makeTagsOut
   output:
@@ -321,7 +335,7 @@ process sampleMakeUCSCTrack {
 }
 
 process sampleMACS2CallPeaks {
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   echo true
   input:
     set val(sampleInfo), file(bamFile) from filteredDedupOut_callPeaks_MACS
@@ -344,7 +358,7 @@ process sampleMACS2CallPeaks {
 }
 
 process sampleHomerCallPeaks {
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   errorStrategy 'ignore'
   input:
     set val(sampleInfo), file(tagDir) from makeTagsOut_callPeaks_homer
@@ -363,7 +377,7 @@ process sampleHomerCallPeaks {
 }
 
 process sampleAnnotatePeaks {
-  publishDir {sampleInfo["baseDir"]}
+  publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(xlsFile) from outputMACS2_xlsPeaks
   output:
