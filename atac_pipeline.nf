@@ -4,6 +4,8 @@
  * Stephen Zhang (stephen.zhang@monash.edu), Feb 2018
  */
 
+import org.yaml.snakeyaml.Yaml
+
 params.help = false
 /* multisample flag - if set, then we will handle sample table */
 params.multiSample = false
@@ -14,6 +16,7 @@ params.numCpus = 8
 params.refGenomeIndex = ''
 params.refGenomeFasta = ''
 params.refGenomeName=''
+params.configFile = ''
 
 // default command-line parameters for tools we want to use in pipeline
 
@@ -53,6 +56,28 @@ def_cmd_params["macs2"] = ["--nomodel":true,
 def_cmd_params["findpeaks"] = ["-style":"factor"]
 
 def_cmd_params["annotatepeaks"] = [:]
+
+if(params.configFile != ''){
+	Yaml yaml = new Yaml()
+	String configFile = new File(params.configFile).text
+	Map configMap = (Map)yaml.load(configFile)
+
+	/*
+	  Any parameters that are set iin config.yaml will overwrite def_cmd_params
+	  These will in turn be overwritten if one specifies custom sample-specific params
+	*/
+	for(tool in def_cmd_params.keySet()){
+		if(configMap.containsKey(tool)){
+			for(option in def_cmd_params[tool].keySet()){
+				if(configMap[tool].containsKey(option)){
+					def_cmd_params[tool][option] = configMap[tool][option]
+				}
+			}
+		}else{
+			// do nothing
+		}
+	}
+}
 
 /*
 nextflow atac_pipeline.nf --input-dir test_samples/EDM_TAGGCA_L001/ --num-cpus 8 --ref-genome-index /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome --ref-genome-fasta /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa --ref-genome-name danRer10 -resume

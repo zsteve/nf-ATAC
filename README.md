@@ -48,18 +48,48 @@ Nextflow will create a `work` directory (containing pipeline data) in its workin
 
 nextflow atac_pipeline.nf --num-cpus $NUM_CPUS 
 			  --input-dir $INPUT_DIR
+			  --output-dir $OUTPUT_DIR
+			  --config-file $CONFIG_FILE
 			  --ref-genome-name $GENOME_NAME
 			  --ref-genome-index $GENOME_INDEX
 			  --ref-genome-fasta $GENOME_FASTA
-
 ```
 
 * `NUM_CPUS` - maximum number of CPUs to use for the _entire_ pipeline
 * `INPUT_DIR` - path of the directory containing R1,R2 data
+* `OUTPUT_DIR` - path of the directory to write outputs to (will be created if it doesn't already exist). This can be the same as INPUT_DIR.
+* `CONFIG_FILE` (OPTIONAL) - path to `config.yaml` (in case one wants custom parameters for pipeline components). 
 * `GENOME_NAME` - name of the reference genome (e.g. `danRer10`, `hg18`)
 * `GENOME_INDEX` - path to `bowtie2` indexes for reference genome
 * `GENOME_FASTA` - path to `FASTA` sequence of reference genome
 
 Nextflow will output its data to your directory of choice.
+
+*Running the pipeline - multiple samples*
+
+_Data preparation_
+
+For each sample, create a folder `SAMPLE_ID/` containing the paired-end read data in `fastq.gz` format. Create a *sample table* as a text file:
+
+* Each line corresponds to *one* sample. Fields are as follows:
+
+```
+[Sample_ID] [path to sample input directory] [path to sample output directory]
+```
+
+_Command_
+
+Pipeline will read in samples from the sample table `.txt` file and attempt to process those samples in _parallel_. 
+
+```
+nextflow atac_pipeline.nf --num-cpus $NUM_CPUS
+			  --config-file $CONFIG_FILE
+			  --multi-sample
+			  --sample-table $SAMPLE_TABLE
+			  --ref-genome-name $GENOME_NAME
+			  --ref-genome-index $GENOME_INDEX
+			  --ref-genome-fasta $GENOME_FASTA
+
+```
 
 

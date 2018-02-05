@@ -1,0 +1,7 @@
+fastqc:
+
+cutadapt:
+        -a: CTGTCTCTTATACACATCT
+        -A: CTGTCTCTTATACACATCT
+        -q: 20
+        --minimum-length: 36
