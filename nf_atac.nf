@@ -19,6 +19,7 @@ params.refGenomeIndex = ''
 params.refGenomeFasta = ''
 params.refGenomeName=''
 params.configFile = ''
+params.jvarkitPath = ''
 
 // default command-line parameters for tools we want to use in pipeline
 
@@ -85,8 +86,6 @@ if(params.configFile != ''){
 nextflow atac_pipeline.nf --input-dir test_samples/EDM_TAGGCA_L001/ --num-cpus 8 --ref-genome-index /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome --ref-genome-fasta /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa --ref-genome-name danRer10 -resume
 */
 
-params.jvarkitPath = "~/tools/jvarkit/dist"
-params.homerPath = "/home/szha0069/tools/homer/bin"
 
 def getFlagString(Map param_map, String tool, String option){
   return param_map[tool][option] ? option : ""
@@ -171,10 +170,27 @@ if(params.multiSample){
 }
 
 if(params.help){
-  /*
-    TODO: print help message
-  */
-
+  log.info 'nf-ATAC - An integrated pipeline for ATAC-seq data' 
+  log.info '(c) 2018 Stephen Zhang (stephen.zhang@monash.edu)'
+  log.info 'Usage (single sample):'
+  log.info 'nextflow nf_atac.nf'
+  log.info '[--help]'
+  log.info '--num-cpus \$NUM_CPUS'
+  log.info '--input-dir \$INPUT_DIR'
+  log.info '--output-dir \$OUTPUT_DIR'
+  log.info '[--config-file \$CONFIG_FILE]'
+  log.info '--ref-genome-name \$GENOME_NAME'
+  log.info '--ref-genome-index \$GENOME_INDEX'
+  log.info '--ref-genome-fasta \$GENOME_FASTA'
+  log.info 'Usage (multiple samples):'
+  log.info 'nextflow nf_atac.nf'
+  log.info '--num-cpus \$NUM_CPUS'
+  log.info '--config-file \$CONFIG_FILE'
+  log.info '--multi-sample'
+  log.info '--sample-table \$SAMPLE_TABLE'
+  log.info '--ref-genome-name \$GENOME_NAME'
+  log.info '--ref-genome-index \$GENOME_INDEX'
+  log.info '--ref-genome-fasta \$GENOME_FASTA'
   exit 0
 }
 
@@ -334,7 +350,7 @@ process sampleMakeTags {
     set val(sampleInfo), file('maketags_output') into makeTagsOut, makeTagsOut_callPeaks_homer
   script:
     """
-    $params.homerPath/makeTagDirectory\
+    makeTagDirectory\
     maketags_output\
     -genome $params.refGenomeFasta\
     -checkGC $bamFile\
@@ -354,7 +370,7 @@ process sampleMakeUCSCTrack {
     output_track_name = sampleInfo["ID"] + '_UCSC.bedgraph'
     """
     mkdir -p makeUCSCtrack_output;
-    $params.homerPath/makeUCSCfile $tagDir -o makeUCSCtrack_output/$output_track_name\
+    makeUCSCfile $tagDir -o makeUCSCtrack_output/$output_track_name\
       -fsize ${def_cmd_params["makeucscfile"]["-fsize"]}\
       -name $output_track_name\
       > makeucsctrack.stdout 2> makeucsctrack.stderr
@@ -395,7 +411,7 @@ process sampleHomerCallPeaks {
   script:
     output_name = sampleInfo["ID"] + '_homer_findpeaks.txt'
   """
-    $params.homerPath/findPeaks\
+    findPeaks\
     $tagDir
     -style ${def_cmd_params["findpeaks"]["-style"]}\
     -o homer_findpeaks_output/$output_name
@@ -414,7 +430,7 @@ process sampleAnnotatePeaks {
     annotationFile = sampleInfo["ID"] + '_annotation.txt'
     """
     mkdir -p homer_annotatepeaks_output;
-    $params.homerPath/annotatePeaks.pl\
+    annotatePeaks.pl\
       $xlsFile\
       $params.refGenomeName\
       > homer_annotatepeaks_output/$annotationFile 2> homer_annotatepeaks_output/homer_annotatepeaks_output.stderr

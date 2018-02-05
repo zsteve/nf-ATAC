@@ -11,6 +11,7 @@ check_dep(){
 	fi
 }
 
+check_dep macs2
 check_dep fastqc
 check_dep cutadapt
 check_dep bowtie2
