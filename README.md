@@ -19,15 +19,15 @@ Have an problem? Please log an issue on GitHub (https://github.com/zsteve/atac-s
 *Dependencies*
 Please make sure these tools are installed before running the pipeline:
 
-* `MACS2`
-* `FastQC`
-* `cutadapt`
-* `bowtie2`
-* `picard/2.8.2`
-* `samtools`
-* `homer`
-* `jvarkit`
-* `snakeyaml` (please download from https://bitbucket.org/asomov/snakeyaml/wiki/Documentation and add to $CLASSPATH)
+* [`MACS2`](https://github.com/taoliu/MACS)
+* [`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+* [`cutadapt`](http://cutadapt.readthedocs.io/en/stable/guide.html)
+* [`bowtie2`](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+* [`picard/2.8.2`](https://broadinstitute.github.io/picard/)
+* [`samtools`](http://samtools.sourceforge.net/)
+* [`homer`](http://homer.ucsd.edu/homer/)
+* [`jvarkit`](https://github.com/lindenb/jvarkit)
+* [`snakeyaml`](https://bitbucket.org/asomov/snakeyaml/wiki/Documentation) please add to $CLASSPATH
 
 One can check that most dependencies are installed by running `checkdep.sh`.
 *At the current time, please manually confirm that `snakeyaml` is installed!
