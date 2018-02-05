@@ -1,5 +1,9 @@
-**nf-ATAC**i
-_An integrated pipeline for ATAC-seq data written in *Nextflow*, written with :heart:_
+**nf-ATAC**
+
+
+_An integrated pipeline for ATAC-seq data written in *Nextflow* with:heart:_
+
+
 Author:		Stephen Zhang (stephen.zhang@monash.edu)
 Date:		5 Feb 2018
 
@@ -15,12 +19,14 @@ Have an problem? Please log an issue on GitHub (https://github.com/zsteve/atac-s
 *Dependencies*
 Please make sure these tools are installed before running the pipeline:
 
+* `MACS2`
 * `FastQC`
 * `cutadapt`
 * `bowtie2`
 * `picard/2.8.2`
 * `samtools`
 * `homer`
+* `jvarkit`
 * `snakeyaml` (please download from https://bitbucket.org/asomov/snakeyaml/wiki/Documentation and add to $CLASSPATH)
 
 One can check that most dependencies are installed by running `checkdep.sh`.
@@ -34,7 +40,7 @@ Nextflow can be downloaded by using the following command:
 
 This will create a binary `nextflow` in the working directory. You can add this binary to your `PATH` for ease of use:
 
-`export PATH=$PATH:[your path here]
+`export PATH=$PATH:[your path here]`
 
 The pipeline can be executed by running `nextflow`, specifying the script and relevant commandline arguments.
 
@@ -52,7 +58,8 @@ Nextflow will create a `work` directory (containing pipeline data) in its workin
 
 ```
 
-nextflow atac_pipeline.nf --num-cpus $NUM_CPUS 
+nextflow atac_pipeline.nf --num-cpus $NUM_CPUS
+			  --jvarkit-path $JVARKIT_PATH
 			  --input-dir $INPUT_DIR
 			  --output-dir $OUTPUT_DIR
 			  --config-file $CONFIG_FILE
@@ -89,6 +96,7 @@ Pipeline will read in samples from the sample table `.txt` file and attempt to p
 
 ```
 nextflow atac_pipeline.nf --num-cpus $NUM_CPUS
+			  --jvarkit-path $JVARKIT_PATH
 			  --config-file $CONFIG_FILE
 			  --multi-sample
 			  --sample-table $SAMPLE_TABLE
