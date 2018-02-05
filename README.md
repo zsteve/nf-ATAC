@@ -1,4 +1,5 @@
-**ATAC-seq pipeline**
+**nf-ATAC**i
+_An integrated pipeline for ATAC-seq data written in *Nextflow*, written with :heart:_
 Author:		Stephen Zhang (stephen.zhang@monash.edu)
 Date:		5 Feb 2018
 
@@ -6,7 +7,7 @@ Date:		5 Feb 2018
 ____
 
 *Introduction*
-A pipeline for processing ATAC-seq data written in Nextflow script (https://www.nextflow.io/).
+`nf-ATAC` pipeline for processing ATAC-seq data written in Nextflow script (https://www.nextflow.io/).
 Currently in early stages, this `README` will definitely be updated regularly (check often!)
 
 Have an problem? Please log an issue on GitHub (https://github.com/zsteve/atac-seq-pipeline)
