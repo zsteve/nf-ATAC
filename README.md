@@ -26,7 +26,7 @@ Please make sure these tools are installed before running the pipeline:
 * [`picard/2.8.2`](https://broadinstitute.github.io/picard/)
 * [`samtools`](http://samtools.sourceforge.net/)
 * [`homer`](http://homer.ucsd.edu/homer/)
-* [`jvarkit`](https://github.com/lindenb/jvarkit)
+* [`jvarkit`](https://github.com/lindenb/jvarkit) *only need to use samjs*
 * [`snakeyaml`](https://bitbucket.org/asomov/snakeyaml/wiki/Documentation) please add to $CLASSPATH
 
 One can check that most dependencies are installed by running `checkdep.sh`.
