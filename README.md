@@ -75,6 +75,7 @@ nextflow atac_pipeline.nf --num-cpus $NUM_CPUS
 * `GENOME_NAME` - name of the reference genome (e.g. `danRer10`, `hg18`)
 * `GENOME_INDEX` - path to `bowtie2` indexes for reference genome
 * `GENOME_FASTA` - path to `FASTA` sequence of reference genome
+* `JVARKIT_PATH` - path to installation of `jvarkit/samjs`. *Note* `JVARKIT_PATH` must specify the directory containing `samjs.jar` (this may be a subdirectory of your installation directory).
 
 Nextflow will output its data to your directory of choice.
 
