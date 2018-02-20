@@ -412,9 +412,9 @@ process sampleHomerCallPeaks {
     output_name = sampleInfo["ID"] + '_homer_findpeaks.txt'
   """
     findPeaks\
-    $tagDir
+    $tagDir\
     -style ${def_cmd_params["findpeaks"]["-style"]}\
-    -o homer_findpeaks_output/$output_name
+    -o homer_findpeaks_output/$output_name\
     > homer_findpeaks_output/homer_findpeaks.stdout 2> homer_findpeaks_output/homer_findpeaks.stderr
   """
 }
