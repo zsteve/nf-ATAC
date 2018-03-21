@@ -184,7 +184,7 @@ if(params.help){
   log.info '--ref-genome-fasta \$GENOME_FASTA'
   log.info 'Usage (multiple samples):'
   log.info 'nextflow nf_atac.nf'
-  log.info '--num-cpus \$NUM_CPUS'
+  tog.info '--num-cpus \$NUM_CPUS'
   log.info '--config-file \$CONFIG_FILE'
   log.info '--multi-sample'
   log.info '--sample-table \$SAMPLE_TABLE'
@@ -255,8 +255,10 @@ process sampleMapToReference {
     -1 ${reads[0]}\
     -2 ${reads[1]}\
     -S bowtie2_output/$output_sam_name\
-    > bowtie2_output/bowtie2.stdout 2> bowtie2_output/bowtie2.stderr
+    > bowtie2_output/bowtie2.stdout 2> bowtie2_output/${sampleInfo["ID"]}_bowtie2.out
     """
+    // here we had to move bowtie2.stderr (where bowtie2 output stats are fed) to a named
+    // output file because we want multiQC to pick up on the sample name
 }
 
 process sampleSamToBam {
@@ -267,23 +269,29 @@ process sampleSamToBam {
     set val(sampleInfo), file(samFile) from mappedSamOut
   output:
     file 'samtobam_output/*'
-    set val(sampleInfo), file('samtobam_output/*.bam') into mappedBamOut_getStat, mappedBamOut
+		file 'samtobam_output/*.bam.bai'
+    set val(sampleInfo), file('samtobam_output/*.bam') into mappedBamOut_getStat,mappedBamOut
+    set val(sampleInfo), file('samtobam_output/*.bam'), file('samtobam_output/*.bai') into mappedBamOut_QC
   script:
-    output_bam_name = sampleInfo["ID"] + '.bam'
+    output_name = sampleInfo["ID"]
+		/* we make a symlink fropm *.bai to *.bam.bai because ATACseqQC makes a few assumptions about our naming convention */
     """
-      mkdir -p samtobam_output; touch samtobam_output/test;
-      picard SortSam SO=coordinate INPUT=$samFile OUTPUT=samtobam_output/$output_bam_name CREATE_INDEX=true\
+      mkdir -p samtobam_output;
+      picard SortSam SO=coordinate INPUT=$samFile OUTPUT=samtobam_output/${output_name}.bam CREATE_INDEX=true\
       > samtobam_output/picard_sortsam.stdout 2> samtobam_output/picard_sortsam.stderr
-    """
+    	mv samtobam_output/*.bai samtobam_output/${output_name}.bam.bai
+		"""
 }
 
 process sampleGetMapStats {
   //echo true
+  /* our usage of flagstat may soon be superseded by qualimap */
   publishDir {sampleInfo["baseDirOut"]}
   input:
     set val(sampleInfo), file(bamFile) from mappedBamOut_getStat
   output:
     file 'flagstat_output/*'
+		file 'qualimap_output*/*'
     file 'flagstat_output/*_flagstat.txt' into flagStatOut
   script:
     output_flagstat_name = sampleInfo["ID"] + '_flagstat.txt'
@@ -291,7 +299,10 @@ process sampleGetMapStats {
       mkdir -p flagstat_output;
       samtools flagstat $bamFile > flagstat_output/$output_flagstat_name\
       2> samtools_flagstat.stderr
-    """
+			
+			mkdir -p qualimap_output_${sampleInfo["ID"]};
+			qualimap bamqc -bam $bamFile -outdir qualimap_output_${sampleInfo["ID"]}
+		"""	
 }
 
 process sampleFilterMMMR {
@@ -365,7 +376,7 @@ process sampleMakeUCSCTrack {
     set val(sampleInfo), file(tagDir) from makeTagsOut
   output:
     file "makeUCSCtrack_output/*"
-    file "makeUCSCtrack_output/*.bedgraph.gz" into makeUCSCTrackOut
+    file "makeUCSCtrack_output/*.bedgraph.gz" into makeUCSCTrackOut 
   script:
     output_track_name = sampleInfo["ID"] + '_UCSC.bedgraph'
     """
@@ -434,5 +445,24 @@ process sampleAnnotatePeaks {
       $xlsFile\
       $params.refGenomeName\
       > homer_annotatepeaks_output/$annotationFile 2> homer_annotatepeaks_output/homer_annotatepeaks_output.stderr
+    """
+}
+
+process createQCReport {
+  publishDir {sampleInfo["baseDirOut"]}
+  echo true
+  errorStrategy 'ignore'
+  input:
+    set val(sampleInfo), file(bamFile), file(bamIndex) from mappedBamOut_QC 
+  output:
+    file 'qc_output/*'
+  exec: 
+    rmdScriptDir = workflow.scriptFile.getParent().toString()
+  shell:
+    """	
+    #mv !{bamIndex} !{bamFile}.bai
+    mkdir -p qc_output;
+    !{rmdScriptDir}/qc/create_qc.sh !{bamFile} !{sampleInfo["ID"]} BSgenome.Drerio.UCSC.danRer10 TxDb.Drerio.UCSC.danRer10.refGene !{rmdScriptDir}/qc/qc.rmd qc_output\
+    > qc_output/create_qc_report_output.stdout 2> qc_output/create_qc_report_output.stderr
     """
 }

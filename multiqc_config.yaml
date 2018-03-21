@@ -1,4 +1,8 @@
-extra_fn_clean_exts:
-    - '_flagstat'
-    - '_annotation'
-    - '_peaks'
+fn_clean_exts:
+        - '.bam'
+        - '_001'
+        - '_flagstat'
+        - '_bowtie2.out'
+fn_clean_trim:
+        - 'qualimap_output_'
+

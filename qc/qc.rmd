@@ -1,0 +1,124 @@
+---
+output:
+  
+  html_document: default
+  pdf_document: default
+params:
+  bamFilePath: Sample_LMN_output/samtobam_output/LMN.bam
+  sampleName: EDM
+  genomeBioStrings: BSgenome.Drerio.UCSC.danRer10
+  genomeTxDb: TxDb.Drerio.UCSC.danRer10.refGene
+---
+
+#ATAC-seq QC
+```{r include=FALSE, cache=FALSE, warning = FALSE, message = FALSE}
+library(ATACseqQC)
+
+bamFilePath <- params$bamFilePath
+sampleName <- params$sampleName
+genomeBioStrings <- params$genomeBioStrings
+genomeTxDb <- params$genomeTxDb
+
+chrList <- c('chr1') #c(paste("chr", c(1:25), sep = ''), 'chrM')
+```
+
+* Sample BAM file: `r (bamFilePath)`
+* Sample ID: `r (sampleName)`
+* Reference genome (biostrings): `r (genomeBioStrings)`
+* Chromosomes considered: `r (chrList)`
+
+##Fragment size distribution
+```{r echo=FALSE, cache=FALSE, warning = FALSE, message = FALSE}
+fragSize <- fragSizeDist(bamFilePath, sampleName)
+```
+
+```{r include=FALSE, cache=FALSE, warning = FALSE, message = FALSE}
+# bin fragments into mononucleosome, etc. Files written to ${working_dir}/atac_qc_output
+# shift alignments
+
+outputPath <- file.path(getwd(), '/atac_qc_output')
+dir.create(outputPath, showWarnings = FALSE)
+
+library(genomeBioStrings, character.only = TRUE)
+library(genomeTxDb, character.only = TRUE)
+library(GenomeInfoDb)
+
+tags <- c("AS", "XN", "XM", "XO", "XG", "NM", "MD", "YS", "YT")
+
+which <- as(seqinfo(Drerio)[chrList], "GRanges")
+gal <- readBamFile(bamFilePath, tag=tags, which = which, asMates = TRUE)
+gal_shifted <- shiftGAlignmentsList(gal)
+shiftedBamFile <- file.path(outputPath, 'shifted.bam')
+
+# write shifted BAM file
+export(gal_shifted, shiftedBamFile)
+
+# now split reads into nuc. free, mononucleosome, dinucleosome, etc.
+txs <- transcripts(TxDb.Drerio.UCSC.danRer10.refGene)
+txs <- txs[seqnames(txs) %in% chrList]
+genome <- Drerio
+
+# now split 
+splits <- splitGAlignmentsByCut(gal_shifted, txs=txs, genome=genome)
+writeListOfGAlignments(splits, outputPath)
+
+library(ChIPpeakAnno)
+bamFiles <- file.path(outputPath, c("NucleosomeFree.bam", 
+                                    "mononucleosome.bam",
+                                    "dinucleosome.bam",
+                                    "trinucleosome.bam"))
+
+TSS <- promoters(txs, upstream = 0, downstream = 1)
+TSS <- unique(TSS)
+librarySize <- estLibSize(bamFiles)
+
+n_tiles <- 101
+dws <- ups <- 1010
+sigs <- enrichedFragments(gal = splits[c("NucleosomeFree",
+                                       "mononucleosome",
+                                       "dinucleosome",
+                                       "trinucleosome")],
+                          TSS=TSS,
+                          librarySize = librarySize,
+                          seqlev = chrList,
+                          TSS.filter = 0.5,
+                          n.tile = n_tiles,
+                          upstream = ups,
+                          downstream = dws)
+
+sigs.log2 <- lapply(sigs, function(.ele) log2(.ele+1))
+```
+
+
+##log-transformed signal of TSS start site +/- 1kbp, nucleosome-free and mononucleosome
+```{r echo=FALSE, cache=FALSE, warning = FALSE, message = FALSE}
+library(ATACseqQC)
+library(ChIPpeakAnno)
+featureAlignedHeatmap(sigs.log2, reCenterPeaks(TSS, width = ups + dws), zeroAt = .5, n.tile = n_tiles)
+
+```
+
+
+##TF footprint at CTCF motifs +/- 100bp
+```{r echo=FALSE, messages=FALSE, warning = FALSE, message = FALSE}
+library(MotifDb)
+library(ATACseqQC)
+library(ChIPpeakAnno)
+CTCF <- as.list(query(MotifDb, c("CTCF")))
+
+sigs <- factorFootprints(shiftedBamFile, pfm=CTCF[[1]],
+                         genome=genome,
+                         min.score = "90%",
+                         seqlev = chrList,
+                         upstream = 100,
+                         downstream = 100)
+
+featureAlignedHeatmap(sigs$signal, 
+                      feature.gr = reCenterPeaks(sigs$bindingSites,
+                                                 width = 200+width(sigs$bindingSites[1])),
+                      annoMcols = "score",
+                      sortBy = "score",
+                      n.tile = ncol(sigs$signal[[1]]))
+```
+
+
