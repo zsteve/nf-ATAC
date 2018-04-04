@@ -4,13 +4,14 @@ output:
   html_document: default
   pdf_document: default
 params:
-  bamFilePath: Sample_LMN_output/samtobam_output/LMN.bam
-  sampleName: EDM
-  genomeBioStrings: BSgenome.Drerio.UCSC.danRer10
-  genomeTxDb: TxDb.Drerio.UCSC.danRer10.refGene
+  bamFilePath: ''
+  sampleName: ''
+  genomeBioStrings: ''
+  genomeTxDb: ''
+
 ---
 
-#ATAC-seq QC
+#ATAC-seq QC report
 ```{r include=FALSE, cache=FALSE, warning = FALSE, message = FALSE}
 library(ATACseqQC)
 
@@ -19,7 +20,7 @@ sampleName <- params$sampleName
 genomeBioStrings <- params$genomeBioStrings
 genomeTxDb <- params$genomeTxDb
 
-chrList <- c('chr1') #c(paste("chr", c(1:25), sep = ''), 'chrM')
+chrList <- c(paste("chr", c(1:25), sep = ''), 'chrM')
 ```
 
 * Sample BAM file: `r (bamFilePath)`

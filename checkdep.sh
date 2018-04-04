@@ -18,3 +18,4 @@ check_dep bowtie2
 check_dep picard
 check_dep samtools
 check_dep homer
+check_dep qualimap

@@ -51,7 +51,7 @@ def_cmd_params["makeucscfile"] = ["-fsize":"1e10"]
 
 def_cmd_params["macs2"] = ["--nomodel":true,
                            "--keep-dup":"all",
-                           "--gsize":"11250000000",
+                           "--gsize":"0", // genome size, MUST SET in config file 
                            "--shift":"-37",
                            "--extsize":"73",
                            "-B":true]
@@ -59,6 +59,9 @@ def_cmd_params["macs2"] = ["--nomodel":true,
 def_cmd_params["findpeaks"] = ["-style":"factor"]
 
 def_cmd_params["annotatepeaks"] = [:]
+
+def_cmd_params["qc_report"] = ["bsgenome":"",
+                               "txdb":""]
 
 if(params.configFile != ''){
     Yaml yaml = new Yaml()
@@ -82,7 +85,15 @@ if(params.configFile != ''){
     }
 }
 
+// double check that genome size is set. if not, complain!
+if(def_cmd_params["macs2"]["--gsize"] == '0'){
+    // complain
+    log.info("macs2 --gsize (genome size) not specified!! Exiting")
+    exit 0
+}
+
 /*
+Example command for running pipeline
 nextflow atac_pipeline.nf --input-dir test_samples/EDM_TAGGCA_L001/ --num-cpus 8 --ref-genome-index /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/Bowtie2Index/genome --ref-genome-fasta /home/szha0069/reference_genomes/Danio_rerio/UCSC/danRer10/Sequence/WholeGenomeFasta/genome.fa --ref-genome-name danRer10 -resume
 */
 
@@ -318,7 +329,7 @@ process sampleFilterMMMR {
     output_bam_name = sampleInfo["ID"] + '_filtered_MMMR.bam'
     """
       mkdir -p filtering_output;
-      java -jar $params.jvarkitPath/samjs.jar\
+      java -jar $params.jvarkitPath/dist/samjs.jar\
       --samoutputformat ${def_cmd_params["samjs"]["--samoutputformat"]}\
       -o filtering_output/$output_bam_name\
       -e \'${def_cmd_params["samjs"]["-e"]}\'\
@@ -358,11 +369,11 @@ process sampleMakeTags {
   input:
     set val(sampleInfo), file(bamFile) from filteredDedupOut_makeTags
   output:
-    set val(sampleInfo), file('maketags_output') into makeTagsOut, makeTagsOut_callPeaks_homer
+    set val(sampleInfo), file('maketags_output_*') into makeTagsOut, makeTagsOut_callPeaks_homer
   script:
     """
     makeTagDirectory\
-    maketags_output\
+    maketags_output_${sampleInfo["ID"]}\
     -genome $params.refGenomeFasta\
     -checkGC $bamFile\
     > maketagdirectory.stdout 2> maketagdirectory.stderr
@@ -458,11 +469,13 @@ process createQCReport {
     file 'qc_output/*'
   exec: 
     rmdScriptDir = workflow.scriptFile.getParent().toString()
+    rmd_bsgenome = def_cmd_params["qc_report"]["bsgenome"]
+    rmd_txdb = def_cmd_params["qc_report"]["txdb"]
   shell:
     """	
     #mv !{bamIndex} !{bamFile}.bai
     mkdir -p qc_output;
-    !{rmdScriptDir}/qc/create_qc.sh !{bamFile} !{sampleInfo["ID"]} BSgenome.Drerio.UCSC.danRer10 TxDb.Drerio.UCSC.danRer10.refGene !{rmdScriptDir}/qc/qc.rmd qc_output\
+    !{rmdScriptDir}/qc/create_qc.sh !{bamFile} !{sampleInfo["ID"]} !{rmd_bsgenome} !{rmd_txdb} !{rmdScriptDir}/qc/qc.rmd qc_output\
     > qc_output/create_qc_report_output.stdout 2> qc_output/create_qc_report_output.stderr
     """
 }

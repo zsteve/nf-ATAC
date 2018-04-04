@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
-# Create QC report
+# Helper script to create QC report
+# Stephen Zhang, 2018
 # Usage:
 # create_qc.r [bamFilePath] [sampleName] [genomeBioStrings] [genomeTxDb]
 #             [Rmd_script] [outputDir]
