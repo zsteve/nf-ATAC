@@ -52,6 +52,13 @@ _Data preparation_
 
 Paired-end read sample data in `.fastq.gz` format should be located in a directory with the desired sample name. Read pairs should be distinguishable in the format `*_R{1,2}*.fastq.gz`.
 
+_Configuration_
+
+There are a few parameters which *must* be specified correctly in `config.yaml` before running the pipeline ... **things will not work without these parameters**
+
+ * `macs2 : --gsize` must be specified for `macs2` to correctly call peaks.
+ * `qc_report : bsgenome, txdb` must be specified for QC report generation using `ATACseqQC` to work. `bsgenome` must specifiy the BSgenome Biostrings package corresponding to the reference genome. `txdb` must specify the `GenomeFeatures` package containing transcript annotations for the reference genome. 
+
 _Command_
 
 Nextflow will create a `work` directory (containing pipeline data) in its working directory (i.e. `.`). Final pipeline output files will be output to a desired directory, however these will generally be _symlinks_ to the actual copy of the file within `work/**/your_file_here`. It is *very* important that `work` does *not* get deleted - otherwise your symlinks will mean nothing!
