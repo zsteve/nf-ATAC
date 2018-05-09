@@ -8,7 +8,6 @@ Author:		Stephen Zhang (stephen.zhang@monash.edu)
 Date:		5 Feb 2018
 
 
-____
 
 *Introduction*
 `nf-ATAC` pipeline for processing ATAC-seq data written in Nextflow script (https://www.nextflow.io/).
@@ -28,6 +27,15 @@ Please make sure these tools are installed before running the pipeline:
 * [`homer`](http://homer.ucsd.edu/homer/)
 * [`jvarkit`](https://github.com/lindenb/jvarkit) *only need to use samjs*
 * [`snakeyaml`](https://bitbucket.org/asomov/snakeyaml/wiki/Documentation) please add to $CLASSPATH
+
+For QC, we require the following:
+
+* [`ATACseqQC`](https://bioconductor.org/packages/release/bioc/html/ATACseqQC.html)
+* [`Biostrings`](https://bioconductor.org/packages/release/bioc/html/Biostrings.html)
+* [`GenomicFeatures`](https://bioconductor.org/packages/release/bioc/html/GenomicFeatures.html)
+* [`GenomeInfoDb`](https://bioconductor.org/packages/release/bioc/html/GenomeInfoDb.html)
+* [`ChIPpeakAnno`](https://bioconductor.org/packages/release/bioc/html/ChIPpeakAnno.html)
+* [`MotifDb`](http://bioconductor.org/packages/release/bioc/html/MotifDb.html)
 
 One can check that most dependencies are installed by running `checkdep.sh`.
 *At the current time, please manually confirm that `snakeyaml` is installed!

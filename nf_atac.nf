@@ -462,7 +462,7 @@ process sampleAnnotatePeaks {
 process createQCReport {
   publishDir {sampleInfo["baseDirOut"]}
   echo true
-  errorStrategy 'ignore'
+  //errorStrategy 'ignore'
   input:
     set val(sampleInfo), file(bamFile), file(bamIndex) from mappedBamOut_QC 
   output:

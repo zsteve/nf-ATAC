@@ -20,7 +20,7 @@ sampleName <- params$sampleName
 genomeBioStrings <- params$genomeBioStrings
 genomeTxDb <- params$genomeTxDb
 
-chrList <- c(paste("chr", c(1:25), sep = ''), 'chrM')
+chrList <- c(paste("chr", c(1, 2), sep = ''), 'chrM')
 ```
 
 * Sample BAM file: `r (bamFilePath)`
