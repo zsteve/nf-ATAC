@@ -61,7 +61,7 @@ def_cmd_params["findpeaks"] = ["-style":"factor"]
 def_cmd_params["annotatepeaks"] = [:]
 
 def_cmd_params["qc_report"] = ["bsgenome":"",
-                               "txdb":""]
+                               "txdb":"", "nchr":""]
 
 if(params.configFile != ''){
     Yaml yaml = new Yaml()
@@ -459,23 +459,38 @@ process sampleAnnotatePeaks {
     """
 }
 
+process subsetBam {
+  publishDir {sampleInfo["baseDirOut"]}
+  input:
+    set val(sampleInfo), file(bamFile), file(bamIndex) from mappedBamOut_QC
+  output:
+    file 'subsetbam/*' 
+    set val(sampleInfo), file('subsetbam/subset.bam'), file('subsetbam/subset.bam.bai') into subsetBamOut_QC
+  script:
+    """
+    mkdir -p subsetbam
+    sambamba view --format=bam --subsample=0.1 $bamFile > subsetbam/subset.bam
+    sambamba index -p subsetbam/subset.bam > subsetbam/subset.bam.bai
+    """
+}
+
 process createQCReport {
   publishDir {sampleInfo["baseDirOut"]}
   echo true
   //errorStrategy 'ignore'
   input:
-    set val(sampleInfo), file(bamFile), file(bamIndex) from mappedBamOut_QC 
+    set val(sampleInfo), file(subsetBamFile), file(subsetBamIndex) from subsetBamOut_QC 
   output:
     file 'qc_output/*'
   exec: 
     rmdScriptDir = workflow.scriptFile.getParent().toString()
     rmd_bsgenome = def_cmd_params["qc_report"]["bsgenome"]
     rmd_txdb = def_cmd_params["qc_report"]["txdb"]
+    rmd_nchr = def_cmd_params["qc_report"]["nchr"]
   shell:
     """	
-    #mv !{bamIndex} !{bamFile}.bai
     mkdir -p qc_output;
-    !{rmdScriptDir}/qc/create_qc.sh !{bamFile} !{sampleInfo["ID"]} !{rmd_bsgenome} !{rmd_txdb} !{rmdScriptDir}/qc/qc.rmd qc_output\
+    !{rmdScriptDir}/qc/create_qc.sh !{subsetBamFile} !{sampleInfo["ID"]} !{rmd_bsgenome} !{rmd_txdb} !{rmdScriptDir}/qc/qc.rmd qc_output !{rmd_nchr}\
     > qc_output/create_qc_report_output.stdout 2> qc_output/create_qc_report_output.stderr
     """
 }

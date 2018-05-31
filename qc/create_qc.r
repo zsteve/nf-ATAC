@@ -3,7 +3,7 @@
 # Stephen Zhang, 2018
 # Usage:
 # create_qc.r [bamFilePath] [sampleName] [genomeBioStrings] [genomeTxDb]
-#             [Rmd_script] [outputDir]
+#             [Rmd_script] [outputDir] [nChr]
 args <- commandArgs(trailingOnly = T)
 bamFilePath <- args[1]
 sampleName <- args[2]
@@ -11,6 +11,7 @@ genomeBioStrings <- args[3]
 genomeTxDb <- args[4]
 rmdPath <- args[5]
 outputDir <- args[6]
+nchr <- args[7]
 
 library(rmarkdown)
 render(rmdPath, output_format = "html_document",
@@ -22,5 +23,6 @@ render(rmdPath, output_format = "html_document",
          bamFilePath = bamFilePath,
          sampleName = sampleName,
          genomeBioStrings = genomeBioStrings,
-         genomeTxDb = genomeTxDb
+         genomeTxDb = genomeTxDb,
+         nchr = nchr
        ))

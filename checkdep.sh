@@ -19,3 +19,4 @@ check_dep picard
 check_dep samtools
 check_dep homer
 check_dep qualimap
+check_dep sambamba

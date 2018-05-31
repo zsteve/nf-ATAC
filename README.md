@@ -24,9 +24,10 @@ Please make sure these tools are installed before running the pipeline:
 * [`bowtie2`](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * [`picard/2.8.2`](https://broadinstitute.github.io/picard/)
 * [`samtools`](http://samtools.sourceforge.net/)
-* [`homer`](http://homer.ucsd.edu/homer/)
+* [`homer`](http://homer.ucsd.edu/homer/) please add to $PATH
 * [`jvarkit`](https://github.com/lindenb/jvarkit) *only need to use samjs*
 * [`snakeyaml`](https://bitbucket.org/asomov/snakeyaml/wiki/Documentation) please add to $CLASSPATH
+* [`sambamba`](http://lomereiter.github.io/sambamba/) please add to $PATH
 
 For QC, we require the following:
 

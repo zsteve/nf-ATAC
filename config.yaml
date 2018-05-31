@@ -12,3 +12,4 @@ cutadapt:
 qc_report:
         bsgenome: BSgenome.Drerio.UCSC.danRer10
         txdb: TxDb.Drerio.UCSC.danRer10.refGene
+        nchr: 25

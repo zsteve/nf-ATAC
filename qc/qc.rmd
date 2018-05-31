@@ -8,6 +8,7 @@ params:
   sampleName: ''
   genomeBioStrings: ''
   genomeTxDb: ''
+  nchr: ''
 
 ---
 
@@ -19,14 +20,17 @@ bamFilePath <- params$bamFilePath
 sampleName <- params$sampleName
 genomeBioStrings <- params$genomeBioStrings
 genomeTxDb <- params$genomeTxDb
+nchr <- params$nchr
 
-chrList <- c(paste("chr", c(1, 2), sep = ''), 'chrM')
+#chrList <- c(paste("chr", seq(1, as.numeric(nchr)) , sep = ''), 'chrM')
+chrList <- c('chr1')
 ```
 
 * Sample BAM file: `r (bamFilePath)`
 * Sample ID: `r (sampleName)`
 * Reference genome (biostrings): `r (genomeBioStrings)`
-* Chromosomes considered: `r (chrList)`
+* Chromosomes considered: chr1:w
+ 
 
 ##Fragment size distribution
 ```{r echo=FALSE, cache=FALSE, warning = FALSE, message = FALSE}
@@ -46,7 +50,9 @@ library(GenomeInfoDb)
 
 tags <- c("AS", "XN", "XM", "XO", "XG", "NM", "MD", "YS", "YT")
 
-which <- as(seqinfo(Drerio)[chrList], "GRanges")
+organism_name = strsplit(genomeBioStrings, '\\.')[[1]][2]
+
+which <- as(seqinfo(eval(parse(text = organism_name)))[chrList], "GRanges")
 gal <- readBamFile(bamFilePath, tag=tags, which = which, asMates = TRUE)
 gal_shifted <- shiftGAlignmentsList(gal)
 shiftedBamFile <- file.path(outputPath, 'shifted.bam')
@@ -55,9 +61,9 @@ shiftedBamFile <- file.path(outputPath, 'shifted.bam')
 export(gal_shifted, shiftedBamFile)
 
 # now split reads into nuc. free, mononucleosome, dinucleosome, etc.
-txs <- transcripts(TxDb.Drerio.UCSC.danRer10.refGene)
+txs <- transcripts(eval(parse(text = genomeTxDb)))
 txs <- txs[seqnames(txs) %in% chrList]
-genome <- Drerio
+genome <- eval(parse(text = organism_name))
 
 # now split 
 splits <- splitGAlignmentsByCut(gal_shifted, txs=txs, genome=genome)
