@@ -1,7 +1,7 @@
 fastqc:
 
 macs2:
-        --gsize: 11250000000
+        --gsize: mm 
 
 cutadapt:
         -a: CTGTCTCTTATACACATCT
@@ -10,6 +10,6 @@ cutadapt:
         --minimum-length: 36
 
 qc_report:
-        bsgenome: BSgenome.Drerio.UCSC.danRer10
-        txdb: TxDb.Drerio.UCSC.danRer10.refGene
-        nchr: 25
+        bsgenome: BSgenome.Mmusculus.UCSC.mm10
+        txdb: TxDb.Mmusculus.UCSC.mm10.knownGene
+        nchr: 20

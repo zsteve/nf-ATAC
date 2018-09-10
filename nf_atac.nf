@@ -477,7 +477,7 @@ process subsetBam {
 process createQCReport {
   publishDir {sampleInfo["baseDirOut"]}
   echo true
-  //errorStrategy 'ignore'
+  errorStrategy 'ignore'
   input:
     set val(sampleInfo), file(subsetBamFile), file(subsetBamIndex) from subsetBamOut_QC 
   output:
