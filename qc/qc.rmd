@@ -22,14 +22,14 @@ genomeBioStrings <- params$genomeBioStrings
 genomeTxDb <- params$genomeTxDb
 nchr <- params$nchr
 
-#chrList <- c(paste("chr", seq(1, as.numeric(nchr)) , sep = ''), 'chrM')
-chrList <- c('chr1')
+chrList <- c(paste("chr", seq(1, as.numeric(nchr)) , sep = ''), 'chrM')
+#chrList <- c('chr1')
 ```
 
 * Sample BAM file: `r (bamFilePath)`
 * Sample ID: `r (sampleName)`
 * Reference genome (biostrings): `r (genomeBioStrings)`
-* Chromosomes considered: chr1:w
+* Chromosomes considered: `r (chrList)`
  
 
 ##Fragment size distribution
